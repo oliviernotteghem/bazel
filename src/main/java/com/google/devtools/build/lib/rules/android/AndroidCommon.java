@@ -384,16 +384,21 @@ public class AndroidCommon {
     return ImmutableList.of(ruleContext.getHostPrerequisiteArtifact("debug_key"));
   }
 
-  private void compileResources(
-      JavaSemantics javaSemantics,
+  private void addResourceClassJarToClassPath(
       Artifact resourceJavaClassJar,
-      Artifact resourceJavaSrcJar,
       JavaCompilationArtifacts.Builder artifactsBuilder,
       JavaTargetAttributes.Builder attributes,
       NestedSetBuilder<Artifact> filesBuilder)
-      throws InterruptedException, RuleErrorException {
+      throws InterruptedException {
 
+<<<<<<< HEAD
     packResourceSourceJar(javaSemantics, resourceJavaSrcJar);
+=======
+    // The resource class JAR should already have been generated.
+    Preconditions.checkArgument(
+        resourceJavaClassJar.equals(
+            ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_CLASS_JAR)));
+>>>>>>> 57930eb44a... Resource linking for android_library targets is unnecessary.
 
     // Add the compiled resource jar to the classpath of the main compilation.
     attributes.addDirectJars(NestedSetBuilder.create(Order.STABLE_ORDER, resourceJavaClassJar));
@@ -404,7 +409,6 @@ public class AndroidCommon {
     artifactsBuilder.addCompileTimeJarAsFullJar(resourceJavaClassJar);
 
     // Add the compiled resource jar as a declared output of the rule.
-    filesBuilder.add(resourceSourceJar);
     filesBuilder.add(resourceJavaClassJar);
   }
 
@@ -477,6 +481,7 @@ public class AndroidCommon {
     NestedSetBuilder<Artifact> jarsProducedForRuntime = NestedSetBuilder.<Artifact>stableOrder();
     NestedSetBuilder<Artifact> filesBuilder = NestedSetBuilder.<Artifact>stableOrder();
 
+<<<<<<< HEAD
     Artifact resourceJavaSrcJar = resourceApk.getResourceJavaSrcJar();
     if (resourceJavaSrcJar != null) {
       filesBuilder.add(resourceJavaSrcJar);
@@ -488,11 +493,31 @@ public class AndroidCommon {
           artifactsBuilder,
           attributesBuilder,
           filesBuilder);
+=======
+    if (resourceApk.addResourcesClassJarToCompilationClasspath()) {
+      // If resources are being linked then include R.java in source jar
+      if (getAndroidConfig(ruleContext).linkLibraryResources()) {
+        Artifact resourceJavaSrcJar = resourceApk.getResourceJavaSrcJar();
+        if (resourceJavaSrcJar != null) {
+          filesBuilder.add(resourceJavaSrcJar);
 
-      // Combined resource constants needs to come even before our own classes that may contain
-      // local resource constants.
-      artifactsBuilder.addRuntimeJar(resourceApk.getResourceJavaClassJar());
-      jarsProducedForRuntime.add(resourceApk.getResourceJavaClassJar());
+          packResourceSourceJar(javaSemantics, resourceJavaSrcJar);
+
+          // Add the compiled resource jar as a declared output of the rule.
+          filesBuilder.add(resourceSourceJar);
+        }
+      }
+>>>>>>> 57930eb44a... Resource linking for android_library targets is unnecessary.
+
+      if (resourceApk.getResourceJavaClassJar() != null) {
+        addResourceClassJarToClassPath(resourceApk.getResourceJavaClassJar(),
+            artifactsBuilder, attributesBuilder, filesBuilder);
+
+        // Combined resource constants needs to come even before our own classes that may contain
+        // local resource constants.
+        artifactsBuilder.addRuntimeJar(resourceApk.getResourceJavaClassJar());
+        jarsProducedForRuntime.add(resourceApk.getResourceJavaClassJar());
+      }
     }
 
     // Databinding metadata that the databinding annotation processor reads.
