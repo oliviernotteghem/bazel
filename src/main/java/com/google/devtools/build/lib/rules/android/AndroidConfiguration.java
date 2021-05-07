@@ -763,6 +763,15 @@ public class AndroidConfiguration extends Fragment implements AndroidConfigurati
     public boolean incompatibleUseToolchainResolution;
 
     @Option(
+            name = "android hwasan", // Space is so that this cannot be set on the command line
+            defaultValue = "false",
+            documentationCategory = OptionDocumentationCategory.UNDOCUMENTED,
+            effectTags = {OptionEffectTag.LOADING_AND_ANALYSIS},
+            metadataTags = {OptionMetadataTag.INTERNAL},
+            help = "Whether HWASAN is enabled.")
+    public boolean hwasan;
+
+    @Option(
         name = "experimental_filter_r_jars_from_android_test",
         defaultValue = "false",
         documentationCategory = OptionDocumentationCategory.UNDOCUMENTED,
@@ -915,6 +924,35 @@ public class AndroidConfiguration extends Fragment implements AndroidConfigurati
                 + "for instrumentation testing).")
     public boolean disableInstrumentationManifestMerging;
 
+    @Option(
+        name = "experimental_get_android_java_resources_from_optimized_jar",
+        defaultValue = "false",
+        documentationCategory = OptionDocumentationCategory.UNDOCUMENTED,
+        effectTags = {OptionEffectTag.CHANGES_INPUTS},
+        help =
+            "Get Java resources from _proguard.jar instead of _deploy.jar in android_binary when "
+                + "bundling the final APK.")
+    public boolean getJavaResourcesFromOptimizedJar;
+
+    @Option(
+        name = "android_include_proguard_location_references",
+        defaultValue = "false",
+        documentationCategory = OptionDocumentationCategory.UNDOCUMENTED,
+        effectTags = {OptionEffectTag.AFFECTS_OUTPUTS},
+        help =
+            "When using aapt2 to generate proguard configurations, include location references."
+                + " This will make the build nondeterministic.")
+    public boolean includeProguardLocationReferences;
+
+    @Option(
+        name = "merge_android_manifest_permissions",
+        defaultValue = "false",
+        documentationCategory = OptionDocumentationCategory.UNDOCUMENTED,
+        effectTags = {OptionEffectTag.AFFECTS_OUTPUTS},
+        help = "If enabled, the manifest merger will merge uses-permission and "
+                + "uses-permission-sdk-23 attributes.")
+    public boolean mergeAndroidManifestPermissions;
+
     @Override
     public FragmentOptions getHost() {
       Options host = (Options) super.getHost();
@@ -996,6 +1034,10 @@ public class AndroidConfiguration extends Fragment implements AndroidConfigurati
   private final Label legacyMainDexListGenerator;
   private final boolean disableInstrumentationManifestMerging;
   private final boolean incompatibleUseToolchainResolution;
+  private final boolean hwasan;
+  private final boolean getJavaResourcesFromOptimizedJar;
+  private final boolean includeProguardLocationReferences;
+  private final boolean mergeAndroidManifestPermissions;
 
   public AndroidConfiguration(BuildOptions buildOptions) throws InvalidConfigurationException {
     Options options = buildOptions.get(Options.class);
@@ -1054,6 +1096,10 @@ public class AndroidConfiguration extends Fragment implements AndroidConfigurati
     this.legacyMainDexListGenerator = options.legacyMainDexListGenerator;
     this.disableInstrumentationManifestMerging = options.disableInstrumentationManifestMerging;
     this.incompatibleUseToolchainResolution = options.incompatibleUseToolchainResolution;
+    this.hwasan = options.hwasan;
+    this.getJavaResourcesFromOptimizedJar = options.getJavaResourcesFromOptimizedJar;
+    this.includeProguardLocationReferences = options.includeProguardLocationReferences;
+    this.mergeAndroidManifestPermissions = options.mergeAndroidManifestPermissions;
 
     if (incrementalDexingShardsAfterProguard < 0) {
       throw new InvalidConfigurationException(
@@ -1082,6 +1128,16 @@ public class AndroidConfiguration extends Fragment implements AndroidConfigurati
       defaultInToolRepository = true)
   public Label getSdk() {
     return sdk;
+  }
+
+  /** Returns the label provided with --legacy_main_dex_list_generator, if any. */
+  // TODO(b/147692286): Move R8's main dex list tool into tool repository.
+  @StarlarkConfigurationField(
+      name = "legacy_main_dex_list_generator",
+      doc = "Returns the label provided with --legacy_main_dex_list_generator, if any.")
+  @Nullable
+  public Label getLegacyMainDexListGenerator() {
+    return legacyMainDexListGenerator;
   }
 
   /** Returns whether to use incremental dexing. */
@@ -1320,13 +1376,15 @@ public class AndroidConfiguration extends Fragment implements AndroidConfigurati
     return disableInstrumentationManifestMerging;
   }
 
-  /** Returns the label provided with --legacy_main_dex_list_generator, if any. */
-  // TODO(b/147692286): Move R8's main dex list tool into tool repository.
-  @StarlarkConfigurationField(
-      name = "legacy_main_dex_list_generator",
-      doc = "Returns the label provided with --legacy_main_dex_list_generator, if any.")
-  @Nullable
-  public Label getLegacyMainDexListGenerator() {
-    return legacyMainDexListGenerator;
+  public boolean getJavaResourcesFromOptimizedJar() {
+    return getJavaResourcesFromOptimizedJar;
+  }
+
+  public boolean includeProguardLocationReferences() {
+    return includeProguardLocationReferences;
+  }
+
+  public boolean mergeAndroidManifestPermissions() {
+    return mergeAndroidManifestPermissions;
   }
 }
