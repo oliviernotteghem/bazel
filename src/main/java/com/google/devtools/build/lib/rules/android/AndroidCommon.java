@@ -13,6 +13,8 @@
 // limitations under the License.
 package com.google.devtools.build.lib.rules.android;
 
+
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
@@ -391,14 +393,10 @@ public class AndroidCommon {
       NestedSetBuilder<Artifact> filesBuilder)
       throws InterruptedException {
 
-<<<<<<< HEAD
-    packResourceSourceJar(javaSemantics, resourceJavaSrcJar);
-=======
     // The resource class JAR should already have been generated.
     Preconditions.checkArgument(
         resourceJavaClassJar.equals(
             ruleContext.getImplicitOutputArtifact(AndroidRuleClasses.ANDROID_RESOURCES_CLASS_JAR)));
->>>>>>> 57930eb44a... Resource linking for android_library targets is unnecessary.
 
     // Add the compiled resource jar to the classpath of the main compilation.
     attributes.addDirectJars(NestedSetBuilder.create(Order.STABLE_ORDER, resourceJavaClassJar));
@@ -481,20 +479,6 @@ public class AndroidCommon {
     NestedSetBuilder<Artifact> jarsProducedForRuntime = NestedSetBuilder.<Artifact>stableOrder();
     NestedSetBuilder<Artifact> filesBuilder = NestedSetBuilder.<Artifact>stableOrder();
 
-<<<<<<< HEAD
-    Artifact resourceJavaSrcJar = resourceApk.getResourceJavaSrcJar();
-    if (resourceJavaSrcJar != null) {
-      filesBuilder.add(resourceJavaSrcJar);
-
-      compileResources(
-          javaSemantics,
-          resourceApk.getResourceJavaClassJar(),
-          resourceJavaSrcJar,
-          artifactsBuilder,
-          attributesBuilder,
-          filesBuilder);
-=======
-    if (resourceApk.addResourcesClassJarToCompilationClasspath()) {
       // If resources are being linked then include R.java in source jar
       if (getAndroidConfig(ruleContext).linkLibraryResources()) {
         Artifact resourceJavaSrcJar = resourceApk.getResourceJavaSrcJar();
@@ -507,7 +491,6 @@ public class AndroidCommon {
           filesBuilder.add(resourceSourceJar);
         }
       }
->>>>>>> 57930eb44a... Resource linking for android_library targets is unnecessary.
 
       if (resourceApk.getResourceJavaClassJar() != null) {
         addResourceClassJarToClassPath(resourceApk.getResourceJavaClassJar(),
@@ -518,7 +501,6 @@ public class AndroidCommon {
         artifactsBuilder.addRuntimeJar(resourceApk.getResourceJavaClassJar());
         jarsProducedForRuntime.add(resourceApk.getResourceJavaClassJar());
       }
-    }
 
     // Databinding metadata that the databinding annotation processor reads.
     ImmutableList<Artifact> additionalJavaInputsFromDatabinding =

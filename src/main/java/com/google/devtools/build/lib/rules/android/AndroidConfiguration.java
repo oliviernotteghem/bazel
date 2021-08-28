@@ -1396,8 +1396,10 @@ public class AndroidConfiguration extends Fragment implements AndroidConfigurati
 
   public boolean mergeAndroidManifestPermissions() {
     return mergeAndroidManifestPermissions;
+  }
 
   boolean linkLibraryResources() {
     return linkLibraryResources;
   }
 }
+
