@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.devtools.build.lib.actions.Artifact;
 import com.google.devtools.build.lib.analysis.RuleContext;
+import com.google.devtools.build.lib.collect.nestedset.NestedSet;
 import com.google.devtools.build.lib.analysis.config.CoreOptionConverters.StrictDepsMode;
 import com.google.devtools.build.lib.rules.java.JavaConfiguration.JavaClasspathMode;
 import com.google.devtools.build.lib.rules.java.JavaRuleOutputJarsProvider.JavaOutput;
@@ -373,7 +374,14 @@ public final class JavaLibraryHelper {
       attributes.addDirectJars(mergedDeps.getDirectCompileTimeJars());
     }
 
-    attributes.addCompileTimeClassPathEntries(mergedDeps.getTransitiveCompileTimeJars());
+    // External jvm libraries may not follow strict deps, always use transitive deps for these to make sure they compile
+    boolean isRuleExternal = ruleContext.getLabel().toString().startsWith("@");
+    boolean compileWithTransitiveDeps = isRuleExternal || !ruleContext.getFragment(JavaConfiguration.class).experimentalPruneTransitiveDeps();
+    NestedSet<Artifact> localCompileTimeDeps = compileWithTransitiveDeps
+            ? mergedDeps.getTransitiveCompileTimeJars()
+            : mergedDeps.getDirectCompileTimeJars();
+
+    attributes.addCompileTimeClassPathEntries(localCompileTimeDeps);
     attributes.addRuntimeClassPathEntries(mergedRuntimeDeps.getRuntimeJars());
     attributes.addRuntimeClassPathEntries(mergedDeps.getRuntimeJars());
   }

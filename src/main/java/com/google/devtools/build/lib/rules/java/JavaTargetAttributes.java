@@ -125,9 +125,9 @@ public class JavaTargetAttributes {
       return this;
     }
 
-    public Builder merge(JavaCompilationArgsProvider context) {
+    public Builder merge(JavaCompilationArgsProvider context, boolean pruneTransitiveDeps) {
       Preconditions.checkArgument(!built);
-      addCompileTimeClassPathEntries(context.getTransitiveCompileTimeJars());
+      addCompileTimeClassPathEntries(pruneTransitiveDeps ? context.getDirectCompileTimeJars() : context.getTransitiveCompileTimeJars());
       addRuntimeClassPathEntries(context.getRuntimeJars());
       return this;
     }
